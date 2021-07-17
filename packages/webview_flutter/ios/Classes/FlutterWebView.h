@@ -1,4 +1,4 @@
-// Copyright 2018 The Chromium Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -7,7 +7,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface FLTWebViewController : NSObject <FlutterPlatformView>
+@interface FLTWebViewController : NSObject <FlutterPlatformView, WKUIDelegate>
 
 - (instancetype)initWithFrame:(CGRect)frame
                viewIdentifier:(int64_t)viewId
@@ -19,6 +19,14 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface FLTWebViewFactory : NSObject <FlutterPlatformViewFactory>
 - (instancetype)initWithMessenger:(NSObject<FlutterBinaryMessenger>*)messenger;
+@end
+
+/**
+ * The WkWebView used for the plugin.
+ *
+ * This class overrides some methods in `WKWebView` to serve the needs for the plugin.
+ */
+@interface FLTWKWebView : WKWebView
 @end
 
 NS_ASSUME_NONNULL_END

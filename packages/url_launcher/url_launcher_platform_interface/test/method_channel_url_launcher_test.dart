@@ -1,11 +1,13 @@
-// Copyright 2017 The Chromium Authors. All rights reserved.
+// Copyright 2013 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'package:mockito/mockito.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'package:url_launcher_platform_interface/link.dart';
 import 'package:url_launcher_platform_interface/method_channel_url_launcher.dart';
 import 'package:url_launcher_platform_interface/url_launcher_platform_interface.dart';
 
@@ -25,9 +27,7 @@ void main() {
     });
 
     test('Can be mocked with `implements`', () {
-      final ImplementsUrlLauncherPlatform mock =
-          ImplementsUrlLauncherPlatform();
-      when(mock.isMock).thenReturn(true);
+      final UrlLauncherPlatformMock mock = UrlLauncherPlatformMock();
       UrlLauncherPlatform.instance = mock;
     });
 
@@ -42,6 +42,10 @@ void main() {
     final List<MethodCall> log = <MethodCall>[];
     channel.setMockMethodCallHandler((MethodCall methodCall) async {
       log.add(methodCall);
+
+      // Return null explicitly instead of relying on the implicit null
+      // returned by the method channel if no return statement is specified.
+      return null;
     });
 
     final MethodChannelUrlLauncher launcher = MethodChannelUrlLauncher();
@@ -60,6 +64,12 @@ void main() {
           })
         ],
       );
+    });
+
+    test('canLaunch should return false if platform returns null', () async {
+      final canLaunch = await launcher.canLaunch('http://example.com/');
+
+      expect(canLaunch, false);
     });
 
     test('launch', () async {
@@ -270,6 +280,20 @@ void main() {
       );
     });
 
+    test('launch should return false if platform returns null', () async {
+      final launched = await launcher.launch(
+        'http://example.com/',
+        useSafariVC: true,
+        useWebView: false,
+        enableJavaScript: false,
+        enableDomStorage: false,
+        universalLinksOnly: false,
+        headers: const <String, String>{},
+      );
+
+      expect(launched, false);
+    });
+
     test('closeWebView default behavior', () async {
       await launcher.closeWebView();
       expect(
@@ -280,7 +304,14 @@ void main() {
   });
 }
 
+class UrlLauncherPlatformMock extends Mock
+    with MockPlatformInterfaceMixin
+    implements UrlLauncherPlatform {}
+
 class ImplementsUrlLauncherPlatform extends Mock
     implements UrlLauncherPlatform {}
 
-class ExtendsUrlLauncherPlatform extends UrlLauncherPlatform {}
+class ExtendsUrlLauncherPlatform extends UrlLauncherPlatform {
+  @override
+  final LinkDelegate? linkDelegate = null;
+}
